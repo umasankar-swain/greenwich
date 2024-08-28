@@ -20,13 +20,6 @@ export default () => ({
       USERNAME: process.env.PG_USERNAME || 'postgres',
       PASSWORD: process.env.PG_PASSWORD || 'Barath655',
       DATABASE: process.env.PG_DATABASE || 'greenwich_db', 
-
-      // PORT: process.env.PG_PORT || 5764,
-      // HOST: process.env.PG_HOST || '15.223.89.159',
-      // USERNAME: process.env.PG_USERNAME || 'postgres',
-      // PASSWORD: process.env.PG_PASSWORD || '_root@77#MC@741',
-      // DATABASE: process.env.PG_DATABASE || 'db_st_paul_uat',
-
     },
     API_GLOBAL_PREFIX: process.env.API_GLOBAL_PREFIX || `/api`,
     JWT: {

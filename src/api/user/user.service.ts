@@ -14,7 +14,7 @@ export class UserService {
 
 
   async findById(id: string): Promise<Users | null> {
-    const user = await this.usersRepository.findOne({ where: { id } });
+    const user = await this.usersRepository.findOne({ where: { studentId: id } });
     if (!user) {
       throw new NotFoundException('User not found');
     }

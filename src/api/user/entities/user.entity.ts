@@ -1,7 +1,7 @@
 import { Entity, Column, PrimaryColumn, BeforeInsert, OneToMany } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { createHash } from 'crypto';
-import { Lecture } from 'src/api/sessions/entities/session.entity';
+import { Modules } from 'src/api/sessions/entities/session.entity';
 
 @Entity({ name: 'users' })
 export class Users {
@@ -17,16 +17,19 @@ export class Users {
   @Column({ nullable: false })
   course: string;
 
-  @Column({ nullable: false })
+  @Column({ default: '' })
   deviceId: string;
+
+  @Column({ default: '' })
+  studentId: string;
 
   @BeforeInsert()
   generateId() {
     const uuid = uuidv4();
     const hash = createHash('sha256').update(uuid).digest('hex');
-    this.id = hash.substring(0, 10); 
+    this.id = hash.substring(0, 10);
   }
 
-  @OneToMany(() => Lecture, lecture => lecture.student)
-  lectures: Lecture[];
+  @OneToMany(() => Modules, (entity) => entity.user)
+    modules: Modules[];
 }

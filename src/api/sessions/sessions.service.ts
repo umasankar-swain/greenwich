@@ -2,62 +2,91 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { CreateSessionDto } from './dto/create-session.dto';
 import { MarkAttendanceDto } from './dto/update-session.dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Lecture } from './entities/session.entity';
+import { Modules } from './entities/session.entity';
 import { Users } from '../user/entities/user.entity';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 
 @Injectable()
 export class SessionsService {
 
   constructor(
-    @InjectRepository(Lecture) private lecturesRepository: Repository<Lecture>,
+    @InjectRepository(Modules) private modulesRepository: Repository<Modules>,
     @InjectRepository(Users) private usersRepository: Repository<Users>,
   ) { }
 
-  async create(createSessionDto: CreateSessionDto): Promise<Lecture> {
-    const { lectureName,lectureId, studentId, startTime, endTime } = createSessionDto;
+  async create(createSessionDto: CreateSessionDto): Promise<Modules> {
+    const { moduleId, moduleName, startTime, endTime, latitude, longitude, userId } = createSessionDto;
 
-    const student = await this.usersRepository.findOne({ where: { id: studentId } });
+    const student = await this.usersRepository.findOne({ where: { studentId: userId } });
     if (!student) {
       throw new NotFoundException('Student not found');
     }
 
-    // Create and save the lecture
-    const lecture = this.lecturesRepository.create({
-      lectureId,
-      lectureName,
+    const module = this.modulesRepository.create({
+      moduleId,
+      moduleName,
       startTime: new Date(startTime),
       endTime: new Date(endTime),
-      student, 
+      latitude,
+      longitude,
+      user: student,
     });
 
-    return this.lecturesRepository.save(lecture);
+    return this.modulesRepository.save(module);
   }
 
-  async getLecturesForStudent(studentId: string): Promise<Lecture[]> {
-    return this.lecturesRepository.find({ where: { student: { id: studentId } } });
-  }
-
-  async markAttendance(
-    lectureId: number,
-    studentId: string,
-    markAttendanceDto: MarkAttendanceDto,
-  ): Promise<Lecture> {
-    const { latitude, longitude, place } = markAttendanceDto;
-
-    const lecture = await this.lecturesRepository.findOne({
-      where: { id: lectureId, student: { id: studentId } },
-    });
-
-    if (!lecture) {
-      throw new NotFoundException('Lecture not found');
+  async getUpcomingModules(userId: string): Promise<Modules[]> {
+    const student = await this.usersRepository.findOne({ where: { studentId: userId } });
+    if (!student) {
+      throw new NotFoundException('Student not found');
     }
 
-    lecture.markedAttendance = true;
-    lecture.latitude = latitude;
-    lecture.longitude = longitude;
-    lecture.place = place;
+    const now = new Date();
 
-    return this.lecturesRepository.save(lecture);
+    const res = await this.modulesRepository.find({
+      where: {
+        startTime: MoreThan(now),
+        user: {
+          id: student.id,
+        },
+      },
+      order: {
+        startTime: 'ASC',
+      },
+    });
+
+    return res;
   }
+
+
+
+  async markAttendance(markAttendanceDto: MarkAttendanceDto): Promise<boolean> {
+    const { moduleId, studentId, latitude, longitude } = markAttendanceDto;
+
+    const module = await this.modulesRepository.findOne({ where: { moduleId }, relations: ['user'] });
+    if (!module) {
+      throw new NotFoundException('Module not found');
+    }
+
+    const now = new Date(); 
+
+    const startTimeUTC = module.startTime;
+    const endTimeUTC = module.endTime;
+
+    // if (now < startTimeUTC || now > endTimeUTC) {
+    //   throw new BadRequestException('Attendance can only be marked during the module time');
+    // }
+
+    if (module.user && module.user.studentId !== studentId) {
+      throw new NotFoundException('User is not assigned to this module');
+    }
+
+    module.markedAttendance = true;
+    module.latitude = latitude;
+    module.longitude = longitude;
+    await this.modulesRepository.save(module);
+
+    return true;
+  }
+
 }

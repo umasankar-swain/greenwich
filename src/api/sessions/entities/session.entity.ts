@@ -1,23 +1,20 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { Users } from 'src/api/user/entities/user.entity';
 
-@Entity({ name: 'lectures' })
-export class Lecture {
+@Entity({ name: 'modules' })
+export class Modules {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column({ nullable: false })
-    lectureId: string;
+    moduleId: string;
 
     @Column({ nullable: false })
-    lectureName: string;
+    moduleName: string;
 
-    @ManyToOne(() => Users, user => user.lectures, { onDelete: 'CASCADE' })
-    @JoinColumn({ name: 'studentId' })
-    student: Users;
-
-    @Column()
-    studentId: string;
+     @ManyToOne(() => Users, (entity) => entity.studentId)
+     @JoinColumn({ name: 'userId' })
+     user: Users;
 
     @Column({ default: false })
     markedAttendance: boolean;

@@ -16,29 +16,18 @@ export class AuthService {
   ) { }
 
   public async register(signUpDto: SignUpDto): Promise<Users> {
-    const { name, password, course, deviceId } = signUpDto;
+    const { name, password, course,studentId } = signUpDto;
 
-    // Validate or process input data if necessary
-    if (!name || !password || !course || !deviceId) {
+    if (!name || !password || !course) {
       throw new BadRequestException('All fields are required.');
     }
 
-    // Hash the password using Argon2
-    let hashedPassword: string;
-    try {
-      hashedPassword = await argon2.hash(password);
-    } catch (error) {
-      throw new BadRequestException('Password hashing failed.');
-    }
-
-    // Create a new user entity
     const user = new Users();
-    user.name = name;
-    user.password = hashedPassword;
+    user.name = name; 
+    user.password = password;
     user.course = course;
-    user.deviceId = deviceId;
+    user.studentId = studentId;
 
-    // Save the user to the database
     try {
       return await this.usersRepository.save(user);
     } catch (error) {
@@ -47,40 +36,28 @@ export class AuthService {
   }
 
 
-  public async validate(signInDto: SignInDto): Promise<any> {
-    const { name, password, deviceId } = signInDto;
 
-    // Validate input data
-    if (!name || !password) {
+  public async validate(signInDto: SignInDto): Promise<any> {
+    const { studentId, password } = signInDto;
+
+    if (!studentId || !password) {
       throw new BadRequestException('Name and password are required.');
     }
 
-    // Find the user by name
-    const user = await this.usersRepository.findOne({ where: { name } });
+    const user = await this.usersRepository.findOne({ where: { studentId } });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    // Verify the password
-    const isMatch = await argon2.verify(user.password, password);
-    if (!isMatch) {
+    if (user.password !== password) {
       throw new UnauthorizedException('Invalid credentials.');
     }
 
-    // Check if the user is already logged in from another device
-    if (user.deviceId && user.deviceId !== deviceId) {
-      throw new UnauthorizedException('User is already logged in from another device.');
-    }
-
-    // Update the user's device ID
-    user.deviceId = deviceId;
-    await this.usersRepository.save(user);
-
-    // Generate JWT token
     const payload = { username: user.name, sub: user.id };
     const accessToken = this.jwtService.sign(payload);
 
-    return { accessToken };
+    return { accessToken, studentId: user.studentId };
   }
+
 
 }

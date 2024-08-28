@@ -7,18 +7,18 @@ export class SignUpDto {
   name: string;
 
   @ApiProperty({ default: '' })
+  studentId: string;
+
+  @ApiProperty({ default: '' })
   password: string;
 
   @ApiProperty({ default: '' })
   course: string;
-
-  @ApiProperty({ default: '' })
-  deviceId: string;
 }
 
 export class SignInDto {
   @ApiProperty({ default: '' })
-  name: string;
+  studentId: string;
 
   @ApiProperty({ default: '' })
   password: string;

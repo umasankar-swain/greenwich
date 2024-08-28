@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsInt, IsDate, IsDateString } from 'class-validator';
+import { IsNotEmpty, IsString, IsInt, IsDate, IsDateString, IsNumber } from 'class-validator';
 
 export class CreateSessionDto {
   @ApiProperty({
@@ -8,7 +8,23 @@ export class CreateSessionDto {
   })
   @IsNotEmpty()
   @IsString()
-  lectureName: string;
+  moduleId: string;
+
+  @ApiProperty({
+    description: 'The latitude of the location where attendance is being marked',
+    example: 37.7749,
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  latitude: number;
+
+  @ApiProperty({
+    description: 'The longitude of the location where attendance is being marked',
+    example: -122.4194,
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  longitude: number;
 
   @ApiProperty({
     description: 'The name of the lecture',
@@ -16,7 +32,7 @@ export class CreateSessionDto {
   })
   @IsNotEmpty()
   @IsString()
-  lectureId: string;
+  moduleName: string;
 
   @ApiProperty({
     description: 'The ID of the student',
@@ -24,14 +40,14 @@ export class CreateSessionDto {
   })
   @IsNotEmpty()
   @IsString()
-  studentId: string;
+  userId: string;
 
   @ApiProperty({
     description: 'The start time of the lecture',
     example: '2024-08-28T09:00:00Z',
   })
   @IsNotEmpty()
-  @IsDateString() 
+  @IsDateString()
   startTime: Date;
 
   @ApiProperty({
@@ -39,6 +55,6 @@ export class CreateSessionDto {
     example: '2024-08-28T10:00:00Z',
   })
   @IsNotEmpty()
-  @IsDateString() 
+  @IsDateString()
   endTime: Date;
 }

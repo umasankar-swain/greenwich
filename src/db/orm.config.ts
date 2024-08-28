@@ -13,7 +13,7 @@ module.exports = {
   password: appConfiguration().APP.DB.PASSWORD,
   logging: false,
   autoLoadEntities: true,
-  synchronize: true,
+  synchronize: false,
   namingStrategy: new DefaultNamingStrategy(),
   entities: [join(__dirname, '../api/**/*.entity{.ts,.js}')],
   migrations: [join(__dirname, './migrations/public/*{.ts,.js}')]

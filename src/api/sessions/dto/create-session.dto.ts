@@ -3,12 +3,20 @@ import { IsNotEmpty, IsString, IsInt, IsDate, IsDateString } from 'class-validat
 
 export class CreateSessionDto {
   @ApiProperty({
-    description: 'The name of the lecture',
+    description: 'The Id of the lecture',
     example: 'COMP1001',
   })
   @IsNotEmpty()
   @IsString()
   lectureName: string;
+
+  @ApiProperty({
+    description: 'The name of the lecture',
+    example: 'Networking Architecture',
+  })
+  @IsNotEmpty()
+  @IsString()
+  lectureId: string;
 
   @ApiProperty({
     description: 'The ID of the student',

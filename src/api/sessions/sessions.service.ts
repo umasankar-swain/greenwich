@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateSessionDto } from './dto/create-session.dto';
-import { UpdateSessionDto } from './dto/update-session.dto';
+import { MarkAttendanceDto } from './dto/update-session.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Lecture } from './entities/session.entity';
 import { Users } from '../user/entities/user.entity';
@@ -15,7 +15,7 @@ export class SessionsService {
   ) { }
 
   async create(createSessionDto: CreateSessionDto): Promise<Lecture> {
-    const { lectureName, studentId, startTime, endTime } = createSessionDto;
+    const { lectureName,lectureId, studentId, startTime, endTime } = createSessionDto;
 
     const student = await this.usersRepository.findOne({ where: { id: studentId } });
     if (!student) {
@@ -24,6 +24,7 @@ export class SessionsService {
 
     // Create and save the lecture
     const lecture = this.lecturesRepository.create({
+      lectureId,
       lectureName,
       startTime: new Date(startTime),
       endTime: new Date(endTime),
@@ -37,7 +38,13 @@ export class SessionsService {
     return this.lecturesRepository.find({ where: { student: { id: studentId } } });
   }
 
-  async markAttendance(lectureId: any, studentId: string): Promise<Lecture> {
+  async markAttendance(
+    lectureId: number,
+    studentId: string,
+    markAttendanceDto: MarkAttendanceDto,
+  ): Promise<Lecture> {
+    const { latitude, longitude, place } = markAttendanceDto;
+
     const lecture = await this.lecturesRepository.findOne({
       where: { id: lectureId, student: { id: studentId } },
     });
@@ -47,6 +54,10 @@ export class SessionsService {
     }
 
     lecture.markedAttendance = true;
+    lecture.latitude = latitude;
+    lecture.longitude = longitude;
+    lecture.place = place;
+
     return this.lecturesRepository.save(lecture);
   }
 }

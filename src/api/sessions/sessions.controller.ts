@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { SessionsService } from './sessions.service';
 import { CreateSessionDto } from './dto/create-session.dto';
-import { UpdateSessionDto } from './dto/update-session.dto';
+import { MarkAttendanceDto } from './dto/update-session.dto';
 import { ApiTags } from '@nestjs/swagger';
 
 @ApiTags('sessions')
@@ -23,8 +23,17 @@ export class SessionsController {
     return this.sessionsService.getLecturesForStudent(studentId);
   }
 
+  // @Patch(':lectureId/attendance')
+  // markAttendance(@Param('lectureId') lectureId: string, @Body('studentId') studentId: string) {
+  //   return this.sessionsService.markAttendance(lectureId, studentId);
+  // }
+
   @Patch(':lectureId/attendance')
-  markAttendance(@Param('lectureId') lectureId: string, @Body('studentId') studentId: string) {
-    return this.sessionsService.markAttendance(lectureId, studentId);
+  markAttendance(
+    @Param('lectureId') lectureId: string,
+    @Body() markAttendanceDto: MarkAttendanceDto
+  ) {
+    const { studentId } = markAttendanceDto;
+    return this.sessionsService.markAttendance(+lectureId, studentId, markAttendanceDto);
   }
 }

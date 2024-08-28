@@ -7,6 +7,9 @@ export class Lecture {
     id: number;
 
     @Column({ nullable: false })
+    lectureId: string;
+
+    @Column({ nullable: false })
     lectureName: string;
 
     @ManyToOne(() => Users, user => user.lectures, { onDelete: 'CASCADE' })
@@ -24,4 +27,13 @@ export class Lecture {
 
     @Column({ type: 'timestamp', nullable: false })
     endTime: Date;
+
+    @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+    latitude: number;
+
+    @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
+    longitude: number;
+
+    @Column({ nullable: true })
+    place: string;
 }

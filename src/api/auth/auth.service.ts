@@ -37,11 +37,33 @@ export class AuthService {
 
 
 
-  public async validate(signInDto: SignInDto): Promise<any> {
-    const { studentId, password } = signInDto;
+  // public async validate(signInDto: SignInDto): Promise<any> {
+  //   const { studentId, password,deviceId } = signInDto;
 
-    if (!studentId || !password) {
-      throw new BadRequestException('Name and password are required.');
+  //   if (!studentId || !password) {
+  //     throw new BadRequestException('Name and password are required.');
+  //   }
+
+  //   const user = await this.usersRepository.findOne({ where: { studentId } });
+  //   if (!user) {
+  //     throw new UnauthorizedException('Invalid credentials.');
+  //   }
+
+  //   if (user.password !== password) {
+  //     throw new UnauthorizedException('Invalid credentials.');
+  //   }
+
+  //   const payload = { username: user.name, sub: user.id };
+  //   const accessToken = this.jwtService.sign(payload);
+
+  //   return { accessToken, studentId: user.studentId };
+  // }
+
+  public async validate(signInDto: SignInDto): Promise<any> {
+    const { studentId, password, deviceId } = signInDto;
+
+    if (!studentId || !password || !deviceId) {
+      throw new BadRequestException('Student ID, password, and device ID are required.');
     }
 
     const user = await this.usersRepository.findOne({ where: { studentId } });
@@ -52,6 +74,13 @@ export class AuthService {
     if (user.password !== password) {
       throw new UnauthorizedException('Invalid credentials.');
     }
+
+    if (user.deviceId && user.deviceId !== deviceId) {
+      throw new UnauthorizedException('Login denied: User is already logged in on another device.');
+    }
+
+    user.deviceId = deviceId;
+    await this.usersRepository.save(user);
 
     const payload = { username: user.name, sub: user.id };
     const accessToken = this.jwtService.sign(payload);

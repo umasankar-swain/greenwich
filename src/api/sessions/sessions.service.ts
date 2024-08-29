@@ -4,7 +4,8 @@ import { MarkAttendanceDto } from './dto/update-session.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Modules } from './entities/session.entity';
 import { Users } from '../user/entities/user.entity';
-import { MoreThan, Repository } from 'typeorm';
+import { LessThanOrEqual, MoreThan, Repository } from 'typeorm';
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class SessionsService {
@@ -22,11 +23,15 @@ export class SessionsService {
       throw new NotFoundException('Student not found');
     }
 
+    const timezone = 'America/New_York'; // Example: Eastern Time (ET)
+    const startTimeUS = DateTime.fromISO(startTime, { zone: timezone }).toJSDate();
+    const endTimeUS = DateTime.fromISO(endTime, { zone: timezone }).toJSDate();
+
     const module = this.modulesRepository.create({
       moduleId,
       moduleName,
-      startTime: new Date(startTime),
-      endTime: new Date(endTime),
+      startTime: startTimeUS,
+      endTime: endTimeUS,
       latitude,
       longitude,
       user: student,
@@ -58,6 +63,29 @@ export class SessionsService {
     return res;
   }
 
+  async getCurrentModule(userId: string): Promise<Modules | null> {
+    // Fetch the student details using the userId
+    const student = await this.usersRepository.findOne({ where: { studentId: userId } });
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    const now = new Date();
+
+    const currentModule = await this.modulesRepository.findOne({
+      where: {
+        startTime: LessThanOrEqual(now),  
+        endTime: MoreThan(now),         
+        user: {
+          id: student.id,
+        },
+      },
+      order: {
+        startTime: 'ASC',
+      },
+    });
+
+    return currentModule;
+  }
 
 
   async markAttendance(markAttendanceDto: MarkAttendanceDto): Promise<boolean> {
@@ -68,14 +96,12 @@ export class SessionsService {
       throw new NotFoundException('Module not found');
     }
 
-    const now = new Date(); 
+  const now = new Date();
 
-    const startTimeUTC = module.startTime;
-    const endTimeUTC = module.endTime;
-
-    // if (now < startTimeUTC || now > endTimeUTC) {
-    //   throw new BadRequestException('Attendance can only be marked during the module time');
-    // }
+  // Check if the current time is within the module's start and end times
+  if (now < new Date(module.startTime) || now > new Date(module.endTime)) {
+    throw new BadRequestException('Attendance can only be marked during the module time');
+  }
 
     if (module.user && module.user.studentId !== studentId) {
       throw new NotFoundException('User is not assigned to this module');

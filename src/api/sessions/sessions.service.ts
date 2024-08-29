@@ -40,6 +40,29 @@ export class SessionsService {
     return this.modulesRepository.save(module);
   }
 
+  // async getUpcomingModules(userId: string): Promise<Modules[]> {
+  //   const student = await this.usersRepository.findOne({ where: { studentId: userId } });
+  //   if (!student) {
+  //     throw new NotFoundException('Student not found');
+  //   }
+
+  //   const now = new Date();
+
+  //   const res = await this.modulesRepository.find({
+  //     where: {
+  //       startTime: MoreThan(now),
+  //       user: {
+  //         id: student.id,
+  //       },
+  //     },
+  //     order: {
+  //       startTime: 'ASC',
+  //     },
+  //   });
+
+  //   return res;
+  // }
+
   async getUpcomingModules(userId: string): Promise<Modules[]> {
     const student = await this.usersRepository.findOne({ where: { studentId: userId } });
     if (!student) {
@@ -48,20 +71,30 @@ export class SessionsService {
 
     const now = new Date();
 
-    const res = await this.modulesRepository.find({
-      where: {
-        startTime: MoreThan(now),
-        user: {
-          id: student.id,
+    const modules = await this.modulesRepository.find({
+      where: [
+        {
+          startTime: LessThanOrEqual(now), 
+          endTime: MoreThan(now),        
+          user: {
+            id: student.id,
+          },
         },
-      },
+        {
+          startTime: MoreThan(now),  
+          user: {
+            id: student.id,
+          },
+        },
+      ],
       order: {
         startTime: 'ASC',
       },
     });
 
-    return res;
+    return modules;
   }
+
 
   async getCurrentModule(userId: string): Promise<Modules | null> {
     // Fetch the student details using the userId
@@ -73,8 +106,8 @@ export class SessionsService {
 
     const currentModule = await this.modulesRepository.findOne({
       where: {
-        startTime: LessThanOrEqual(now),  
-        endTime: MoreThan(now),         
+        startTime: LessThanOrEqual(now),
+        endTime: MoreThan(now),
         user: {
           id: student.id,
         },
@@ -89,27 +122,24 @@ export class SessionsService {
 
 
   async markAttendance(markAttendanceDto: MarkAttendanceDto): Promise<boolean> {
-    const { moduleId, studentId, latitude, longitude } = markAttendanceDto;
+    const { moduleId, studentId } = markAttendanceDto;
 
     const module = await this.modulesRepository.findOne({ where: { moduleId }, relations: ['user'] });
     if (!module) {
       throw new NotFoundException('Module not found');
     }
 
-  const now = new Date();
+    const now = new Date();
 
-  // Check if the current time is within the module's start and end times
-  if (now < new Date(module.startTime) || now > new Date(module.endTime)) {
-    throw new BadRequestException('Attendance can only be marked during the module time');
-  }
+    if (now < new Date(module.startTime) || now > new Date(module.endTime)) {
+      throw new BadRequestException('Attendance can only be marked during the module time');
+    }
 
     if (module.user && module.user.studentId !== studentId) {
       throw new NotFoundException('User is not assigned to this module');
     }
 
     module.markedAttendance = true;
-    module.latitude = latitude;
-    module.longitude = longitude;
     await this.modulesRepository.save(module);
 
     return true;

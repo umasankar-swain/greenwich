@@ -34,6 +34,24 @@ export class SessionsController {
     }
   }
 
+  @Get('currentModule/:studentId')
+  async getCurrentModule(@Param('studentId') studentId: string) {
+    try {
+
+      const currentModule = await this.sessionsService.getCurrentModule(studentId);
+
+      if (!currentModule) {
+        throw new NotFoundException('No current module found for this student');
+      }
+
+      return currentModule;
+    } catch (error: any) {
+      console.error(error);
+      throw new HttpException('Failed to fetch the current module', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
   @Patch('attendance')
   async markAttendance(@Body() markAttendanceDto: MarkAttendanceDto) {
     try {
